@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class LevelManager : MonoBehaviour
 {
@@ -23,7 +24,8 @@ public class LevelManager : MonoBehaviour
     public List<int> matches = new List<int>();
 
     private Dictionary<int,Material> itemMaterial = new Dictionary<int, Material>(); // int = clé / Material = valeur / new dictionary -> instancier!
-    
+
+    public UnityEvent whenPlayerWins;    
     void Start()
     {
         items = new ItemBehavior[row * col];
@@ -86,6 +88,12 @@ public class LevelManager : MonoBehaviour
         resetOnGoing = false;
     }
 
+    private IEnumerator Win()
+    {
+        yield return new WaitForSeconds(timeBeforeReset);   // elle repart de la dernière tache et ne reset pas
+        whenPlayerWins?.Invoke(); // si c'est pas null!
+    }
+
     public void RevealMaterial(int id)
     {
         if(resetOnGoing == false && !selected.Contains(id) && !matches.Contains(id)) // si id séléctionné n'est pas dans la liste, on peut l'ajouter dans la liste
@@ -95,12 +103,14 @@ public class LevelManager : MonoBehaviour
             items[id].GetComponent<Renderer>().material = itemMaterial[id]; 
             // correspond à :  materials material = itemMaterial[id];
             //                 items[id].GetComponent<Renderer>().material =  material;
+            items[id].HasBeenSelected(true);
         }
     }
 
     private void ResetMaterial(int id)
     {
         items[id].GetComponent<Renderer>().material = defaultMaterial;
+        items[id].HasBeenSelected(false);
     }
     void Update()
     {
@@ -110,10 +120,20 @@ public class LevelManager : MonoBehaviour
             {
                 matches.Add(selected[0]);
                 matches.Add(selected[1]);
+                items[selected[0]].HasBeenMatched();
+                items[selected[1]].HasBeenMatched();
+
+            if(matches.Count >= row * col) 
+            {
+                StartCoroutine(Win());
+            }
+
             }
             else
             {
                 StartCoroutine(ResetMaterials(selected[0], selected[1]));
+                items[selected[0]].HasBeenSelected(false);
+                items[selected[1]].HasBeenSelected(false);
             }
             selected.Clear();
         }
