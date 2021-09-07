@@ -2,13 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
+
 
 public class LevelManager : MonoBehaviour
 {
-    public int row = 3;
-    public int col = 4;
+    private int row;
+    private int col;
+    public string level;
     public float gapRow = 1.5f;
     public float gapCol = 1.5f;
+
+    private float timer;
+    public Text text; 
 
     [Range(0f,5f)] // permet d'avoir un slider!!!!
     public float timeBeforeReset = 1f;
@@ -27,7 +33,21 @@ public class LevelManager : MonoBehaviour
 
     public UnityEvent whenPlayerWins;    
     void Start()
-    {
+    {   
+        col = PlayerPrefs.GetInt("col",4);
+        row = PlayerPrefs.GetInt("row",3);  //(( , 3)) -> 3 valeur défaut en cas où le programme ne trouve pas de données
+
+        // METHODE AVEC STRING
+        // string level = PlayerPrefs.GetString("level");
+        // if(level == "easy")
+        // {
+        //     col = 2;
+        // }
+        // else if (level == "normal")
+        // {
+        //     col = 4;
+        // }
+
         items = new ItemBehavior[row * col];
         int index = 0;
 
@@ -114,6 +134,13 @@ public class LevelManager : MonoBehaviour
     }
     void Update()
     {
+        timer += Time.deltaTime;
+        Debug.Log(timer);
+
+        string timeDisplay = timer.ToString("N2"); //format pour les float , pour avoir 2 chiffres derrière la virgule
+        text.text = timeDisplay;
+
+        
         if(selected.Count == 2)
         {
             if(itemMaterial[selected[0]] == itemMaterial[selected[1]])
@@ -123,8 +150,9 @@ public class LevelManager : MonoBehaviour
                 items[selected[0]].HasBeenMatched();
                 items[selected[1]].HasBeenMatched();
 
-            if(matches.Count >= row * col) 
+            if(matches.Count >= row * col) // condition qui montre qu'on a gagné!
             {
+                PlayerPrefs.SetFloat("timeDisplay", timer); // Elle enregistre l'info du temps quand on gagne!
                 StartCoroutine(Win());
             }
 
